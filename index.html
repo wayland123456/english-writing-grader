@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>墨韵批文 · 高考英语应用文智能批改平台</title>
+<meta name="description" content="武汉市江夏实验高级中学 · 高考英语应用文智能批改平台。按五档评分细则（15 分制）自动评分，逐条诊断要点覆盖、句式、词汇与语言错误。">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ======================= 顶栏 ======================= -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="logo">
+      <span class="logo-seal">英</span>
+      <div class="logo-text">
+        <h1>墨韵批文 · 英语</h1>
+        <p>武汉市江夏实验高级中学 · 高考英语应用文智能批改平台</p>
+      </div>
+    </div>
+    <nav class="tabs" id="mainTabs">
+      <button class="tab active" data-tab="grade">应用文批改</button>
+      <button class="tab" data-tab="history">历史记录</button>
+      <button class="tab" data-tab="settings">设置</button>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- ======================= 应用文批改 ======================= -->
+  <section id="tab-grade" class="tab-panel active">
+    <div class="grid-2col">
+
+      <!-- 左：提交区 -->
+      <div class="card">
+        <h2 class="card-title">提交作文</h2>
+
+        <div class="form-row">
+          <label for="studentName">学生姓名</label>
+          <input type="text" id="studentName" placeholder="选填，用于历史记录与报告抬头">
+        </div>
+
+        <div class="form-row form-inline">
+          <div>
+            <label for="genreSelect">体裁</label>
+            <select id="genreSelect">
+              <option value="letter">书信 / 邮件</option>
+              <option value="notice">通知 / 公告</option>
+              <option value="speech">演讲稿</option>
+              <option value="application">申请信 / 自荐信</option>
+              <option value="other">其他（通用标准）</option>
+            </select>
+          </div>
+          <div>
+            <label for="presetSelect">题目模板</label>
+            <select id="presetSelect"></select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="promptText">题干（选填）</label>
+          <textarea id="promptText" rows="3" placeholder="粘贴作文题干。填入后 AI 会据此判断是否扣题、要点是否写全"></textarea>
+          <div class="prompt-upload">
+            <div class="upload-zone upload-zone-sm" id="promptZone">
+              <input type="file" id="promptFileInput" accept="image/*" multiple hidden>
+              <p class="upload-main">上传试题图片（截图 / 拍照，支持多张）</p>
+              <p class="upload-sub">点「识别试题」自动提取文字填入上方</p>
+            </div>
+            <div class="image-list image-list-sm" id="promptImageList"></div>
+            <button class="btn btn-outline btn-sm" id="btnPromptOcr" disabled>识别试题</button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="label-row">
+            <label>内容要点</label>
+            <button class="link-btn" id="btnAddPoint">+ 添加要点</button>
+          </div>
+          <div id="pointsList" class="points-list"></div>
+          <p class="form-hint">每条要点可填英文关键词（逗号分隔），用于自动判定学生是否写到。<strong>要点决定档位上限</strong>：漏 1 条最高四档、漏 2 条最高三档。</p>
+        </div>
+
+        <div class="input-mode" id="inputMode">
+          <button class="mode-btn active" data-mode="handwrite">手写拍照上传</button>
+          <button class="mode-btn" data-mode="type">直接输入文字</button>
+        </div>
+
+        <!-- 手写上传 -->
+        <div id="mode-handwrite" class="mode-panel active">
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" id="fileInput" accept="image/*" multiple hidden>
+            <p class="upload-main">点击选择 或 拖拽作文照片到此处</p>
+            <p class="upload-sub">应用文一般 1 张，可一次多选或分批补传，自动按页序编号；自动压缩，AI 逐字识别手写内容</p>
+          </div>
+          <div class="image-list" id="imageList"></div>
+          <button class="btn btn-outline" id="btnOcr" disabled>识别手写内容</button>
+        </div>
+
+        <!-- 文字输入 -->
+        <div id="mode-type" class="mode-panel">
+          <textarea id="essayText" rows="14" placeholder="在此输入或粘贴作文全文（识别结果也会填入此处，可修改）"></textarea>
+          <div class="word-count">
+            <span id="liveCount">0</span> 词
+            <span id="wcHint" class="wc-hint"></span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-outline" id="btnSample">载入示例作文</button>
+          <button class="btn btn-primary" id="btnGrade">开始批改</button>
+        </div>
+        <div class="status-line" id="statusLine"></div>
+      </div>
+
+      <!-- 右：结果区 -->
+      <div class="card" id="resultCard">
+        <div class="result-empty" id="resultEmpty">
+          <div class="empty-mark">阅</div>
+          <p>批改结果将显示在这里</p>
+          <p class="empty-sub">支持 15 分制五档评分 · 要点覆盖 · 语言诊断 · 错误清单</p>
+        </div>
+        <div id="resultContent" class="hidden"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ======================= 历史记录 ======================= -->
+  <section id="tab-history" class="tab-panel">
+    <div class="card">
+      <h2 class="card-title">历史记录 <span class="title-count" id="historyCount"></span></h2>
+      <div class="history-tools">
+        <input type="text" id="historySearch" placeholder="按学生姓名或题干搜索">
+      </div>
+      <div id="historyList"></div>
+      <div class="history-actions">
+        <button class="btn btn-danger-outline" id="btnClearHistory">清空全部记录</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= 设置 ======================= -->
+  <section id="tab-settings" class="tab-panel">
+    <div class="card">
+      <h2 class="card-title">接口设置</h2>
+
+      <div class="form-row">
+        <label>AI 后端 <em>*</em></label>
+        <div class="radio-row">
+          <label class="radio-card">
+            <input type="radio" name="backend" value="qwen" checked>
+            <div class="radio-card-body">
+              <div class="radio-card-title">通义千问 <small>（阿里云百炼，OpenAI 兼容）</small> <span class="badge-recommend">推荐</span></div>
+              <div class="radio-card-desc">一个 Key 同时搞定批改与手写识别，配置最简单</div>
+            </div>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="backend" value="custom">
+            <div class="radio-card-body">
+              <div class="radio-card-title">其他 OpenAI 兼容服务 <small>（DeepSeek / Kimi / 智谱）</small></div>
+              <div class="radio-card-desc">批改更便宜或更强，但手写识别仍需通义 Key</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 通义千问 -->
+      <div id="qwenPane">
+        <div class="form-row">
+          <label for="apiKeyInput">通义千问 API Key <em>*</em></label>
+          <div class="key-row">
+            <input type="password" id="apiKeyInput" placeholder="sk- 开头的阿里云百炼 API Key" autocomplete="off">
+            <button class="btn btn-outline" id="btnToggleKey">显示</button>
+          </div>
+          <p class="form-hint">获取方式：阿里云百炼控制台（bailian.console.aliyun.com）→ API-KEY 管理 → 创建。批改与手写识别共用这一个 Key。</p>
+        </div>
+
+        <div class="form-row form-inline">
+          <div>
+            <label for="modelSelect">批改模型</label>
+            <select id="modelSelect">
+              <option value="qwen-plus" selected>qwen-plus（推荐，性价比高）</option>
+              <option value="qwen-max">qwen-max（更强，但贵）</option>
+            </select>
+          </div>
+          <div>
+            <label for="ocrModelSelect">手写识别模型</label>
+            <select id="ocrModelSelect">
+              <option value="qwen-vl-ocr" selected>qwen-vl-ocr（推荐，最便宜）</option>
+              <option value="qwen-vl-max">qwen-vl-max（识别更准，稍贵）</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 自定义 -->
+      <div id="customPane" class="hidden">
+        <div class="form-row">
+          <label for="customBaseUrl">接口地址（Base URL）</label>
+          <input type="text" id="customBaseUrl" placeholder="https://api.deepseek.com/v1">
+        </div>
+        <div class="form-row">
+          <label for="customModel">模型名称</label>
+          <input type="text" id="customModel" placeholder="deepseek-chat">
+        </div>
+        <div class="form-row">
+          <label for="customKey">API Key</label>
+          <div class="key-row">
+            <input type="password" id="customKey" placeholder="sk-..." autocomplete="off">
+            <button class="btn btn-outline" id="btnToggleCustomKey">显示</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="customOcrKey">手写识别 Key（通义，选填）</label>
+          <div class="key-row">
+            <input type="password" id="customOcrKey" placeholder="不填则使用上方「通义千问」面板里的 Key" autocomplete="off">
+            <button class="btn btn-outline" id="btnToggleOcrKey">显示</button>
+          </div>
+          <p class="form-hint">拍手写照片必须用通义的 Qwen-VL 系列模型识别，其他服务商没有对应的图像模型。</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-outline" id="btnDiagnose">诊断</button>
+        <button class="btn btn-outline" id="btnTestKey">测试连接</button>
+        <button class="btn btn-primary" id="btnSaveSettings">保存设置</button>
+      </div>
+
+      <div class="notice">
+        <p><strong>安全提示：</strong>API 凭据保存在本机浏览器中，仅当前设备可见。教师机上统一录入即可；换电脑或换浏览器需要重新填一次。</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <p>武汉市江夏实验高级中学 · 墨韵批文 · 英语应用文智能批改 · 通义千问 Qwen · 评分仅供参考，最终成绩以教师复核为准</p>
+</footer>
+
+<!-- ======================= 弹层 ======================= -->
+<div class="modal-mask" id="modalMask" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h3 id="modalTitle"></h3>
+      <button class="icon-btn" id="modalClose" aria-label="关闭">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<!-- 报告导出用的离屏容器 -->
+<div id="reportStage" class="report-stage" aria-hidden="true"></div>
+
+<script src="js/vendor/html2canvas.min.js"></script>
+<script src="js/vendor/jspdf.umd.min.js"></script>
+<script src="js/rubric.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/api.js"></script>
+<script src="js/report.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
